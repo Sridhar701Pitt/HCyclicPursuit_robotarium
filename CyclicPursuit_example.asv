@@ -1,6 +1,6 @@
 close all, clc
 %clear all
-N=5;                        % Number of agents
+N=3;                        % Number of agents
 dt=0.01;                   % numerical steplength
 max_iter = 5000;                           
 
@@ -26,18 +26,36 @@ L = diag(sum(A)) - A;
 
 % Target cycle definition
 center = [0;0];
-radius = 0.4;
-interAgentDistance = radius*2*sin(pi/N);
-kp1 = 7;
-kp2 = 0.7;
+radiusL1 = 0.4; % Level 1 radius
+raduisL2 = 0.4; % Level 2 Radius
+interAgentDistance = raduisL2*2*sin(pi/N);
+kp1 = 7; % Gain to maintain circular formation and distance
+kp2 = 0.7; % Gain to stay close to the centroid
+kp3 = 0.7; % velocity Gain to follow to neighbour (based on distance) 
 centerData = plot(center(1),center(2),'*','markersize',12);
 th = 0 : 2*pi/20 : 2*pi-2*pi/20;
-plot(radius.*cos(th)+center(1),radius.*sin(th)+center(2),'b')
+plot(radiusL1.*cos(th)+center(1),radiusL1.*sin(th)+center(2),'b')
 
+% Import and scale the nightsky appropriately.
+gt_img = imread('nightsky.png'); % Original input image file
+% Display the image with an associated spatial referencing object.
+x_img = linspace(-1.6, 1.6, size(gt_img,2));
+y_img = linspace(1.0, -1.0, size(gt_img,1)); %Note the 1 to -1 here due to the (1,1) pixel being in the top left corner.
+gt_img_handle = image(x_img, y_img, gt_img,'CDataMapping','scaled');
+
+% Import and scale the earth logo appropriately.
+wlte_img = imread('wlte.png'); % Original input image file
+% Display the image with an associated spatial referencing object.
+x_img = linspace(-0.13, 0.3, size(wlte_img,2));
+y_img = linspace(0.13, -0.13, size(wlte_img,1)); %Note the 1 to -1 here due to the (1,1) pixel being in the top left corner.
+wlte_img_handle = image(x_img, y_img, wlte_img,'CDataMapping','scaled');
+
+uistack(wlte_img_handle, 'bottom')
+uistack(gt_img_handle, 'bottom')
 
 % Reach initial positions on a circle
 if 1        
-    circularTargets = [ cos( 0:2*pi/N:2*pi*(1- 1/N) ) ; sin( 0:2*pi/N:2*pi*(1- 1/N) ) ];
+    circularTargets = [ raduisL2*cos( 0:2*pi/N:2*pi*(1- 1/N) ) ; raduisL2*sin( 0:2*pi/N:2*pi*(1- 1/N) ) ];
     errorToInitialPos = x - circularTargets;                % Error
     errorNorm = [1,1]*(errorToInitialPos.^2);               % Norm of error
     while max( errorNorm ) > 0.05
@@ -53,7 +71,7 @@ if 1
         dxi = -0.3.*errorToInitialPos;
         % To avoid errors, we need to threshold dxi
         norms = arrayfun(@(x) norm(dxi(:, x)), 1:N);
-        threshold = 3/4*rbtm.max_linear_velocity;
+        threshold = 4/4*rbtm.max_linear_velocity;
         to_thresh = norms > threshold;
         dxi(:, to_thresh) = threshold*dxi(:, to_thresh)./norms(to_thresh);
 
@@ -96,11 +114,14 @@ for k = 1:max_iter
 %         set(centerData,'XData',center(1),'YData',center(2))
 %     end  
 
-    center = [radius*cos(k/800);radius*sin(k/800)];
+    center = [radiusL1*cos(k/800);radiusL1*sin(k/800)];
     set(centerData,'XData',center(1),'YData',center(2))
     % Get new data and initialize new null velocities
     xuni = rbtm.get_poses();                                % Get new robots' states
     x = xuni(1:2,:);                                        % Extract single integrator states
+    %Find current centroid
+    Xc = 1/N*x*ones(N,1);
+
 
     dx = zeros(2,N);                                           % Initialize velocities to zero         
     for i = 1:N                
@@ -110,16 +131,14 @@ for k = 1:max_iter
                 % limit alpha to -pi/2 to pi/2
                 alpha = min(max(alpha,-pi/2),pi/2);
                 R = [cos(alpha), sin(alpha); -sin(alpha) cos(alpha)];
-                %Calculate centeroid shift
-                Xc = 1/N*()
-                dx(:,i) = dx(:,i) + R*( x(:,j)-x(:,i) ) - kp2*( x(:,i) - center );
+                dx(:,i) = dx(:,i) + kp3*R*( x(:,j)-x(:,i) ) + kp2*(center - x(:,i));
             end
         end
     end
     dxi = dx;
     % To avoid errors, we need to threshold dxi
     norms = arrayfun(@(x) norm(dxi(:, x)), 1:N);
-    threshold = 2/4*rbtm.max_linear_velocity;
+    threshold = 3/4*rbtm.max_linear_velocity;
     to_thresh = norms > threshold;
     dxi(:, to_thresh) = threshold*dxi(:, to_thresh)./norms(to_thresh);
 

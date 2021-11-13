@@ -32,10 +32,27 @@ interAgentDistance = raduisL2*2*sin(pi/N);
 kp1 = 7; % Gain to maintain circular formation and distance
 kp2 = 0.7; % Gain to stay close to the centroid
 kp3 = 0.7; % velocity Gain to follow to neighbour (based on distance) 
-centerData = plot(center(1),center(2),'*','markersize',12);
+centerData = plot(center(1),center(2),'*w','markersize',10);
+centeroidData = plot(center(1),center(2),'*y','markersize',10);
 th = 0 : 2*pi/20 : 2*pi-2*pi/20;
 plot(radiusL1.*cos(th)+center(1),radiusL1.*sin(th)+center(2),'b')
 
+% Import and scale the nightsky appropriately.
+gt_img = imread('nightsky.png'); % Original input image file
+% Display the image with an associated spatial referencing object.
+x_img = linspace(-1.6, 1.6, size(gt_img,2));
+y_img = linspace(1.0, -1.0, size(gt_img,1)); %Note the 1 to -1 here due to the (1,1) pixel being in the top left corner.
+gt_img_handle = image(x_img, y_img, gt_img,'CDataMapping','scaled');
+
+% Import and scale the earth logo appropriately.
+wlte_img = imread('wlte.png'); % Original input image file
+% Display the image with an associated spatial referencing object.
+x_img = linspace(-0.1, 0.1, size(wlte_img,2));
+y_img = linspace(0.11, -0.11, size(wlte_img,1)); %Note the 1 to -1 here due to the (1,1) pixel being in the top left corner.
+wlte_img_handle = image(x_img, y_img, wlte_img,'CDataMapping','scaled');
+
+uistack(wlte_img_handle, 'bottom')
+uistack(gt_img_handle, 'bottom')
 
 % Reach initial positions on a circle
 if 1        
@@ -98,11 +115,14 @@ for k = 1:max_iter
 %         set(centerData,'XData',center(1),'YData',center(2))
 %     end  
 
-    center = [radiusL1*cos(k/1600);radiusL1*sin(k/1600)];
+    center = [radiusL1*cos(k/800);radiusL1*sin(k/800)];
     set(centerData,'XData',center(1),'YData',center(2))
     % Get new data and initialize new null velocities
     xuni = rbtm.get_poses();                                % Get new robots' states
     x = xuni(1:2,:);                                        % Extract single integrator states
+    %Find current centroid
+    Xc = 1/N*x*ones(N,1);
+    set(centeroidData,'XData',Xc(1),'YData',Xc(2))
 
     dx = zeros(2,N);                                           % Initialize velocities to zero         
     for i = 1:N                
@@ -119,7 +139,7 @@ for k = 1:max_iter
     dxi = dx;
     % To avoid errors, we need to threshold dxi
     norms = arrayfun(@(x) norm(dxi(:, x)), 1:N);
-    threshold = 2/4*rbtm.max_linear_velocity;
+    threshold = 3/4*rbtm.max_linear_velocity;
     to_thresh = norms > threshold;
     dxi(:, to_thresh) = threshold*dxi(:, to_thresh)./norms(to_thresh);
 
