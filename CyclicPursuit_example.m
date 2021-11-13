@@ -27,8 +27,8 @@ L = diag(sum(A)) - A;
 % Target cycle definition
 center = [0;0];
 radiusL1 = 0.4; % Level 1 radius
-raduisL2 = 0.4; % Level 2 Radius
-interAgentDistance = raduisL2*2*sin(pi/N);
+radiusL2 = 0.4; % Level 2 Radius
+interAgentDistance = radiusL2*2*sin(pi/N);
 kp1 = 7; % Gain to maintain circular formation and distance
 kp2 = 0.7; % Gain to stay close to the centroid
 kp3 = 0.7; % velocity Gain to follow to neighbour (based on distance) 
@@ -39,11 +39,14 @@ font_size = determine_font_size(rbtm, 0.04);
 iteration_caption = sprintf('Iteration %d', 0);
 time_caption = sprintf('Time Elapsed %0.2fs', toc(start_time));
 loop_caption = sprintf('Loop Time %0.2fms', 0);
-title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest 1.0');
+title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest 0.1');
 iteration_label = text(-1.5, -0.7, iteration_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 time_label = text(-1.5, -0.9, time_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 loop_label = text(-1.5, -0.8, loop_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 title_label = text(-1.5, 0.85, title_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth','FontWeight','bold');
+
+%DisplayParams
+param_label = text(-1.5, -0.0, sprintf('Parameters\nRadius L1 %0.2f\nRadius L2 %0.2f\nkp1 %0.2f\nkp2 %0.2f\nkp3 %0.2f', radiusL1, radiusL2,kp1,kp2,kp3), 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 
 centerData = plot(center(1),center(2),'*w','markersize',10);
 centeroidData = plot(center(1),center(2),'*y','markersize',10);
@@ -74,7 +77,7 @@ uistack([time_label], 'top'); % Time label is above iteration label.
 
 % Reach initial positions on a circle
 if 1        
-    circularTargets = [ raduisL2*cos( 0:2*pi/N:2*pi*(1- 1/N) ) ; raduisL2*sin( 0:2*pi/N:2*pi*(1- 1/N) ) ];
+    circularTargets = [ radiusL2*cos( 0:2*pi/N:2*pi*(1- 1/N) ) ; radiusL2*sin( 0:2*pi/N:2*pi*(1- 1/N) ) ];
     errorToInitialPos = x - circularTargets;                % Error
     errorNorm = [1,1]*(errorToInitialPos.^2);               % Norm of error
     while max( errorNorm ) > 0.05
@@ -160,7 +163,7 @@ for k = 1:max_iter
     time_label.FontSize = font_size;
     loop_label.FontSize = font_size;
     title_label.FontSize = font_size;
-
+    param_label.FontSize = font_size;
     % Resize Marker Sizes (In case user changes simulated figure window
     % size, this is unnecessary in submission as the figure window 
     % does not change size).
