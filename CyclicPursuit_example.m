@@ -26,21 +26,26 @@ A(1,N) = 1;
 followers = - diag(sum(A)) + A;
 L = zeros(N+Lead, N+Lead);
 L(2:N+Lead, 2:N+Lead) = followers;
-L(2, 2) = L(2, 2) + 1;
-L(3, 3) = L(3, 3) + 1;
-L(4, 4) = L(4, 4) + 1;
-L(2:N+Lead, 1) = -1;
+for i=2:N+Lead
+    L(i,i) = L(i,i) + 1;
+    L(i, 1) = -1;
+end
+
+%% 
 
 % Target cycle definition
 center = [0;0];
 radiusL1 = 0.6; % Level 1 radius
-radiusL2 = 0.35; % Level 2 Radius
+radiusL2 = 0.3; % Level 2 Radius
 interAgentDistance = radiusL2*2*sin(pi/(N+Lead - 1));
-kp1 = 7; % Gain to maintain circular formation and distance
-kp2 = 1.5; % Gain to follow the centroid
-kp3 = 0.7; % velocity Gain to follow to neighbour (based on distance)
+kp1 = 0.7; % Gain to maintain circular formation and distance
+% kp2 = 1.5; % Gain to follow the centroid
+% kp3 = 0.7; % velocity Gain to follow to neighbour (based on distance)
+kp4 = 5; % Gain to vary angle based on distance from leader 
+kp5 = 0.7; % Gain to maintain distance from the leader
+kp6 = 0.7; % Gain to maintain distance between followes
 kpL = 1;
-robot_maxSpeedFactor = 3/4;
+robot_maxSpeedFactor = 4/4;
 
 %Display iteration and time and title
 start_time = tic; %The start time to compute time elapsed.
@@ -48,17 +53,20 @@ font_size = determine_font_size(rbtm, 0.04);
 iteration_caption = sprintf('Iteration %d', 0);
 time_caption = sprintf('Time Elapsed %0.2fs', toc(start_time));
 loop_caption = sprintf('Loop Time %0.2fms', 0);
-title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest 0.2');
+title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.2a - Updated Algorithm');
 iteration_label = text(-1.5, -0.7, iteration_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 time_label = text(-1.5, -0.9, time_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 loop_label = text(-1.5, -0.8, loop_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 title_label = text(-1.5, 0.85, title_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth','FontWeight','bold');
 
 %DisplayParams
-param_label = text(-1.5, -0.0, sprintf('Parameters\nRadius L1 %0.2f\nRadius L2 %0.2f\nkp1 %0.2f\nkp2 %0.2f\nkp3 %0.2f\nkpL %0.2f\nSpeed factor %0.2f', radiusL1, radiusL2,kp1,kp2,kp3,kpL,robot_maxSpeedFactor), 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
+param_label = text(-1.5, -0.0, sprintf('Parameters\nRadius L1 %0.2f\nRadius L2 %0.2f\nkp1 %0.2f\nkp4 %0.2f\nkp5 %0.2f\nkp6 %0.2f\nkpL %0.2f\nSpeed factor %0.2f', radiusL1, radiusL2,kp1,kp4,kp5,kp6,kpL,robot_maxSpeedFactor), 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 
 centerData = plot(center(1),center(2),'*w','markersize',10);
 centeroidData = plot(center(1),center(2),'*y','markersize',10);
+firstRob = plot(x(:,2),'*r','markersize',15);
+secondRob = plot(x(:,3),'*g','markersize',15);
+thirdRob = plot(x(:,4),'*b','markersize',15);
 
 % Draw the orbit 
 th = 0 : 2*pi/50 : 2*pi-2*pi/50;
@@ -87,15 +95,18 @@ uistack([time_label], 'top'); % Time label is above iteration label.
 
 % Reach initial positions on a circle
 if 1        
-    circularTargets = [ radiusL2*cos( 0:2*pi/N:2*pi*(1- 1/N) ) + radiusL1 ; radiusL2*sin( 0:2*pi/N:2*pi*(1- 1/N) ) + 0 ];
+    circularTargets = [ radiusL1*cos( 0:-2*pi/N:-2*pi*(1- 1/N) ) + radiusL1 ; radiusL1*sin( 0:-2*pi/N:-2*pi*(1- 1/N) ) + 0 ];
     leader_Target = [radiusL1; 0];
     circularTargets = [leader_Target circularTargets];
     errorToInitialPos = x - circularTargets;                % Error
     errorNorm = [1,1]*(errorToInitialPos.^2);               % Norm of error
-    while max( errorNorm ) > 0.01
+    while max( errorNorm ) > 0.02
         % Update state variables        
         xuni = rbtm.get_poses();                            % States of real unicycle robots
-        x = xuni(1:2,1:N+Lead);                                    % x-y positions
+        x = xuni(1:2,:);                                    % x-y positions
+        set(firstRob,'XData',x(1,2),'YData',x(2,2))
+        set(secondRob,'XData',x(1,3),'YData',x(2,3))
+        set(thirdRob,'XData',x(1,4),'YData',x(2,4))
         
         % Update errors
         errorToInitialPos = x - circularTargets;
@@ -154,6 +165,9 @@ for k = 1:max_iter
     % Get new data and initialize new null velocities
     xuni = rbtm.get_poses();                                % Get new robots' states
     x = xuni(1:2,:);                                        % Extract single integrator states
+    set(firstRob,'XData',x(1,2),'YData',x(2,2))
+    set(secondRob,'XData',x(1,3),'YData',x(2,3))
+    set(thirdRob,'XData',x(1,4),'YData',x(2,4))
     %Find current centroid
     Xc = 1/(N+Lead - 1)*x(:,2:N+Lead)*ones(N+Lead - 1,1);
     set(centeroidData,'XData',Xc(1),'YData',Xc(2))
@@ -190,20 +204,18 @@ for k = 1:max_iter
         neighbors = topological_neighbors(L, i);
         for j = neighbors
             if ~isempty(j)
-%                 alpha =  pi/N + kp1*(interAgentDistance - norm(x(:,j)-x(:,i)) );
-%                 % limit alpha to -pi/2 to pi/2
-%                 alpha = min(max(alpha,-pi/2),pi/2);
-%                 R = [cos(alpha), sin(alpha); -sin(alpha) cos(alpha)];
-%                 dx(:,i) = dx(:,i) + kp3*R*( x(:,j)-x(:,i) ) + kp2*(x(:,1) - x(:,i));
+                
                 if j == 1
                     distanceToLeaderE = norm(x(:, 1) - x(:,i));
-                    dx(:,i) = dx(:, i) + kp2*((distanceToLeaderE - radiusL2)/distanceToLeaderE).*(x(:,1) - x(:,i));
+                    beta = pi/2 + kp4*(radiusL2 - distanceToLeaderE);
+                    beta = min(max(beta,0),pi);
+                    R = [cos(beta), sin(beta); -sin(beta) cos(beta)];
+                    dx(:,i) = dx(:,i) + kp5*R*(x(:, 1) - x(:,i))/distanceToLeaderE;
                 else
-                    alpha =  pi/N + kp1*(interAgentDistance - norm(x(:,j)-x(:,i)) );
-                    % limit alpha to -pi/2 to pi/2
+                    alpha = pi/N - kp1*(interAgentDistance - norm(x(:,j)-x(:,i)) );
                     alpha = min(max(alpha,-pi/2),pi/2);
                     R = [cos(alpha), sin(alpha); -sin(alpha) cos(alpha)];
-                    dx(:,i) = dx(:,i) + kp3*R*( x(:,j)-x(:,i) );
+                    dx(:,i) = dx(:,i) - kp6*((interAgentDistance^2 - norm(x(:,j)-x(:,i))^2)/interAgentDistance).*(1*(x(:,j)-x(:,i)));
                 end
             end
         end
