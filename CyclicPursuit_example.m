@@ -20,13 +20,15 @@ dt=0.01;                   % numerical steplength
 max_iter = 10000;                           
 
 % Initialize robotarium
-initial_positions = generate_initial_conditions(N, 'Width', 1, 'Height', 1,'Spacing', 0.2);
+circularTargets = [ 0.7*cos( 0:-2*pi/N:-2*pi*(1- 1/N) ); 0.7*sin( 0:-2*pi/N:-2*pi*(1- 1/N) )];
+initial_positions = generate_initial_conditions(N, 'Width', 3, 'Height', 1.8,'Spacing', 0.2);
+initial_positions(1:2,:) = circularTargets;
 rbtm = Robotarium('NumberOfRobots', N, 'ShowFigure', true, 'InitialConditions', initial_positions);
 % rb = RobotariumBuilder();
 % rbtm = rb.set_number_of_agents(N).set_save_data(false).build();
 si_to_uni_dyn = create_si_to_uni_dynamics();
 % Single-integrator barrier certificates
-uni_barrier_cert = create_uni_barrier_certificate_with_boundary('SafetyRadius', 0.06,'BarrierGain', 300);
+uni_barrier_cert = create_uni_barrier_certificate_with_boundary('SafetyRadius', 0.10,'BarrierGain', 200);
 
 % Initialize robots
 xuni = rbtm.get_poses();                                    % States of real unicycle robots
@@ -56,7 +58,7 @@ font_size = determine_font_size(rbtm, 0.03);
 iteration_caption = sprintf('Iteration %d', 0);
 time_caption = sprintf('Time Elapsed %0.2fs', toc(start_time));
 loop_caption = sprintf('Loop Time %0.2fms', 0);
-title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3 - Hierarchy');
+title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3d - Hierarchy');
 iteration_label = text(-1.5, -0.7, iteration_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 time_label = text(-1.5, -0.9, time_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 loop_label = text(-1.5, -0.8, loop_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
@@ -85,10 +87,10 @@ y_img = linspace(1.5, -1.5, size(gt_img,1)); %Note the 1 to -1 here due to the (
 gt_img_handle = image(x_img, y_img, gt_img,'CDataMapping','scaled');
 
 % Import and scale the earth logo appropriately.
-wlte_img = imresize(imread('wlte.png'),0.3); % Original input image file
+wlte_img = imresize(imread('wlte.png'),0.6); % Original input image file
 
 % Display the image with an associated spatial referencing object.
-img_scaleFactor = 1.6;
+img_scaleFactor = 1.9;
 x_img = linspace(-0.1*img_scaleFactor, 0.1*img_scaleFactor, size(wlte_img,2));
 y_img = linspace(0.11*img_scaleFactor, -0.11*img_scaleFactor, size(wlte_img,1)); %Note the 1 to -1 here due to the (1,1) pixel being in the top left corner.
 wlte_img_handle = image(x_img, y_img, wlte_img,'CDataMapping','scaled');
@@ -163,8 +165,8 @@ for k = 1:max_iter
 %         center = [0.0; -0.5];
 %         set(centerData,'XData',center(1),'YData',center(2))
 %     end  
-
-    center = [0.02*cos(k/200);0.02*sin(k/200)];
+    
+    center = [0.05*cos(k/200);0.05*sin(k/200)];
 %     center = [0;0];
     set(centerData,'XData',center(1),'YData',center(2))
     % Get new data and initialize new null velocities
