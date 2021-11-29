@@ -20,13 +20,13 @@ dt=0.01;                   % numerical steplength
 max_iter = 10000;                           
 
 % Initialize robotarium
-initial_positions = generate_initial_conditions(N, 'Width', 1, 'Height', 1,'Spacing', 0.2);
+initial_positions = generate_initial_conditions(N, 'Width', 3.2, 'Height', 1,'Spacing', 0.3);
 rbtm = Robotarium('NumberOfRobots', N, 'ShowFigure', true, 'InitialConditions', initial_positions);
 % rb = RobotariumBuilder();
 % rbtm = rb.set_number_of_agents(N).set_save_data(false).build();
 si_to_uni_dyn = create_si_to_uni_dynamics();
 % Single-integrator barrier certificates
-uni_barrier_cert = create_uni_barrier_certificate_with_boundary('SafetyRadius', 0.06,'BarrierGain', 300);
+uni_barrier_cert = create_uni_barrier_certificate_with_boundary('SafetyRadius', 0.10,'BarrierGain', 200);
 
 % Initialize robots
 xuni = rbtm.get_poses();                                    % States of real unicycle robots
@@ -56,7 +56,7 @@ font_size = determine_font_size(rbtm, 0.03);
 iteration_caption = sprintf('Iteration %d', 0);
 time_caption = sprintf('Time Elapsed %0.2fs', toc(start_time));
 loop_caption = sprintf('Loop Time %0.2fms', 0);
-title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3 - Hierarchy');
+title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3a - Hierarchy');
 iteration_label = text(-1.5, -0.7, iteration_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 time_label = text(-1.5, -0.9, time_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 loop_label = text(-1.5, -0.8, loop_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
