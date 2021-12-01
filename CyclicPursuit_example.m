@@ -1,4 +1,4 @@
-close all, clc
+close all,  clc
 %clear all
 
 % Cyclic graph
@@ -58,7 +58,7 @@ font_size = determine_font_size(rbtm, 0.03);
 iteration_caption = sprintf('Iteration %d', 0);
 time_caption = sprintf('Time Elapsed %0.2fs', toc(start_time));
 loop_caption = sprintf('Loop Time %0.2fms', 0);
-title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3d - Hierarchy');
+title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3e - Hierarchy');
 iteration_label = text(-1.5, -0.7, iteration_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 time_label = text(-1.5, -0.9, time_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 loop_label = text(-1.5, -0.8, loop_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
@@ -139,6 +139,22 @@ end
  loop_time = 0;
 for k = 1:max_iter
     loop_start_time = tic;
+    if k == 5000
+        % follower shift between sub leaders
+        temp = [0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0;
+                -1,	0,	0,	0,	0,	0,	0,	1,	0,	0,	0,	0;
+                0,	-1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	1;
+                -1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0;
+                0,	0,	0,	-1,	0,	0,	1,	0,	0,	0,	0,	0;
+                0,	0,	0,	-1,	1,	0,	0,	0,	0,	0,	0,	0;
+                0,	0,	0,	-1,	0,	1,	0,	0,	0,	0,	0,	0;
+                -1,	0,	0,	1,	0,	0,	0,	0,	0,	0,	0,	0;
+                0,	0,	0,	0,	0,	0,	0,	-1,	0,	0,	1,	0;
+                0,	0,	0,	0,	0,	0,	0,	-1,	1,	0,	0,	0;
+                0,	0,	0,	0,	0,	0,	0,	-1,	0,	1,	0,	0;
+                0,	-1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0];
+        L = temp;
+    end
 %%Radius adjust 1
 %     if (k == max_iter/4)
 %         radius = 0.8;
