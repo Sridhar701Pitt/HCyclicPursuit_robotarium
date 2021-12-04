@@ -15,6 +15,20 @@ close all, clc
 structure = {[3];[1,3,4]};
 L2_leaders = [2,4,8];
 [L,N] = CyclicHierarchyLaplacian(structure);
+L = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0;
+     0,-1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+    -1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+     0, 0, 0,-1, 0, 0, 1, 0, 0, 0, 0, 0, 0;
+     0, 0, 0,-1, 1, 0, 0, 0, 0, 0, 0, 0, 0;
+     0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 0, 0;
+    -1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+     0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 1, 0;
+     0, 0, 0, 0, 0, 0, 0,-1, 1, 0, 0, 0, 0;
+     0, 0, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0;
+     0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 1, 0, 0;
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;];
+N = 13;
 %N =  Number of agents
 dt=0.01;                   % numerical steplength
 max_iter = 10000;                           
@@ -40,8 +54,8 @@ rbtm.step();                                                % Run robotarium ste
 
 % Target cycle definition
 center = [0;0];
-radiusL1 = 0.7; % Level 1 radius
-radiusL2 = 0.25; % Level 2 Radius
+radiusL1 = 0.55; % Level 1 radius
+radiusL2 = 0.22; % Level 2 Radius
 
 kp1 = 0.7; % Gain to maintain circular formation and distance
 % kp2 = 1.5; % Gain to follow the centroid
@@ -137,6 +151,7 @@ if 1
     
 end
  loop_time = 0;
+ switch_threashold = 0.2;
 for k = 1:max_iter
     loop_start_time = tic;
 %%Radius adjust 1
@@ -165,7 +180,7 @@ for k = 1:max_iter
 %         center = [0.0; -0.5];
 %         set(centerData,'XData',center(1),'YData',center(2))
 %     end  
-    
+
     center = [0.05*cos(k/200);0.05*sin(k/200)];
 %     center = [0;0];
     set(centerData,'XData',center(1),'YData',center(2))
@@ -203,6 +218,49 @@ for k = 1:max_iter
     % Resize Marker Sizes (In case user changes simulated figure window
     % size, this is unnecessary in submission as the figure window 
     % does not change size).
+
+    % check for internode proximity based leader-follower switches
+    if k > 10
+
+        % check for the inter node distances for checking proximity
+        for c_node = 2:N
+            % check if the node in question is one of the leaders
+            if any(L2_leaders==c_node)
+                continue
+            end
+
+            % the node is not a leader itself
+            % check distances from this node to all the leaders
+            idx = 1;
+            dist = zeros(size(L2_leaders));
+            for i_lead = L2_leaders(1,:)
+                dist(idx) = norm(x(:, i_lead) - x(:,c_node));
+                idx = idx + 1;
+            end
+
+            [m_dist, m_idx] = min(dist);
+
+            [~,L_ones_col]=max(L,[],1);
+            c_node_leader = L_ones_col(find(ismember(L(c_node,:),-1)));
+            if isempty(c_node_leader)
+                if m_dist < 0.4
+                    m_idx
+                    L = AddHierarchyLaplacian(L, L2_leaders(m_idx), c_node);
+                end
+                continue;
+            end
+            c_node_leader_dist = dist(L2_leaders==c_node_leader);
+
+            if L2_leaders(m_idx) ~= c_node_leader
+                if (c_node_leader_dist-m_dist) > 0.02
+                    % switch the leader of the node in question
+                    % ...
+                    %L = UpdateHierarchyLaplacian(L, c_node_leader, L2_leaders(m_idx), c_node);
+                end
+            end
+
+        end
+    end
     
     %Actual calculation
     dx = zeros(2,N);                                           % Initialize velocities to zero         
@@ -242,7 +300,7 @@ for k = 1:max_iter
         end
     end
     for i = L2_leaders
-        dx(:,i) = 0.065*dx(:,i);
+        dx(:,i) = 0.045*dx(:,i);
     end
     dxi = dx;
     % To avoid errors, we need to threshold dxi
