@@ -58,7 +58,7 @@ font_size = determine_font_size(rbtm, 0.03);
 iteration_caption = sprintf('Iteration %d', 0);
 time_caption = sprintf('Time Elapsed %0.2fs', toc(start_time));
 loop_caption = sprintf('Loop Time %0.2fms', 0);
-title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3e - Hierarchy');
+title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3e - Follower Shift');
 iteration_label = text(-1.5, -0.7, iteration_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 time_label = text(-1.5, -0.9, time_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 loop_label = text(-1.5, -0.8, loop_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
@@ -137,6 +137,7 @@ if 1
     
 end
  loop_time = 0;
+ reachedCenter = false;
 for k = 1:max_iter
     loop_start_time = tic;
     if k == 5000
@@ -182,8 +183,8 @@ for k = 1:max_iter
 %         set(centerData,'XData',center(1),'YData',center(2))
 %     end  
     
-    center = [0.05*cos(k/200);0.05*sin(k/200)];
-%     center = [0;0];
+%     center = [0.05*cos(k/200);0.05*sin(k/200)];
+    center = [0;0];
     set(centerData,'XData',center(1),'YData',center(2))
     % Get new data and initialize new null velocities
     xuni = rbtm.get_poses();                                % Get new robots' states
@@ -225,6 +226,10 @@ for k = 1:max_iter
     %Leader follows the center
     
     dx(:,1) = dx(:,1) + kpL*(center - x(:,1));
+    if norm(center - x(:,1)) <= 0.01
+        reachedCenter = true;
+    end
+    
     
     for i = 2:N % loop for all robots except the main leader
         neighbors = topological_neighbors(L, i);
@@ -268,6 +273,11 @@ for k = 1:max_iter
     dxi(:, to_thresh) = threshold*dxi(:, to_thresh)./norms(to_thresh);
 
     dxu = si_to_uni_dyn(dxi, xuni);                            % Convert single integrator inputs into unicycle inputs
+
+    if reachedCenter == true
+        dxu(:,1) = [0; 0.1];
+    end
+
     dxu = uni_barrier_cert(dxu, xuni);
     rbtm.set_velocities(1:N, dxu); rbtm.step();              % Set new velocities to robots and update
     loop_time = toc(loop_start_time)*1000;
