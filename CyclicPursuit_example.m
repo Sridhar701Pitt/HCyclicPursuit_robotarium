@@ -17,7 +17,7 @@ L2_leaders = [2,4,8];
 [L,N] = CyclicHierarchyLaplacian(structure);
 %N =  Number of agents
 dt=0.01;                   % numerical steplength
-max_iter = 10000;                           
+max_iter = 8000;                           
 
 % Initialize robotarium
 circularTargets = [ 0.7*cos( 0:-2*pi/N:-2*pi*(1- 1/N) ); 0.7*sin( 0:-2*pi/N:-2*pi*(1- 1/N) )];
@@ -40,8 +40,8 @@ rbtm.step();                                                % Run robotarium ste
 
 % Target cycle definition
 center = [0;0];
-radiusL1 = 0.7; % Level 1 radius
-radiusL2 = 0.25; % Level 2 Radius
+radiusL1 = 0.6; % Level 1 radius
+radiusL2 = 0.3; % Level 2 Radius
 
 kp1 = 0.7; % Gain to maintain circular formation and distance
 % kp2 = 1.5; % Gain to follow the centroid
@@ -50,7 +50,9 @@ kp2 = 5; % Gain to vary angle based on distance from leader
 kp3 = 0.7; % Gain to maintain distance from the leader
 kp4 = 0.7; % Gain to maintain distance between followes
 kpL = 1;
-robot_maxSpeedFactor = 4/4;
+Kp1_4 = [0.7 1.0 0.7 0.7;
+         0.7 1.0 0.7 1.0]; % Kp1 and kp4 values for different follower count
+robot_maxSpeedFactor = 3/4;
 
 %Display iteration and time and title
 start_time = tic; %The start time to compute time elapsed.
@@ -58,7 +60,7 @@ font_size = determine_font_size(rbtm, 0.03);
 iteration_caption = sprintf('Iteration %d', 0);
 time_caption = sprintf('Time Elapsed %0.2fs', toc(start_time));
 loop_caption = sprintf('Loop Time %0.2fms', 0);
-title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3e - Follower Shift');
+title_caption = sprintf('Hierarchical Cyclic Pursuit \nTest v0.3f - Follower Shift');
 iteration_label = text(-1.5, -0.7, iteration_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 time_label = text(-1.5, -0.9, time_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 loop_label = text(-1.5, -0.8, loop_caption, 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
@@ -69,15 +71,15 @@ param_label = text(-1.5, 0.3, sprintf(['Parameters\nRadius L1 %0.2f\nRadius L2 %
     '\nkp1 %0.2f\nkp2 %0.2f\nkp3 %0.2f\nkp4 %0.2f\nkpL %0.2f\nSpeed factor %0.2f' ...
     '\nRobots %d'], radiusL1, radiusL2,kp1,kp2,kp3,kp4,kpL,robot_maxSpeedFactor,N), 'FontSize', font_size, 'Color', 'w','FontName','FixedWidth');
 
-centerData = plot(center(1),center(2),'*w','markersize',10);
-centeroidData = plot(center(1),center(2),'*y','markersize',10);
-firstRob = plot(x(:,2),'*r','markersize',15);
-secondRob = plot(x(:,3),'*g','markersize',15);
-thirdRob = plot(x(:,4),'*b','markersize',15);
+% centerData = plot(center(1),center(2),'*w','markersize',10);
+% centeroidData = plot(center(1),center(2),'*y','markersize',10);
+% firstRob = plot(x(:,2),'*r','markersize',15);
+% secondRob = plot(x(:,3),'*g','markersize',15);
+% thirdRob = plot(x(:,4),'*b','markersize',15);
 
 % Draw the orbit 
 th = 0 : 2*pi/90 : 2*pi;
-plot(radiusL1.*cos(th)+center(1),radiusL1.*sin(th)+center(2),'.','MarkerSize',3,'Color',[0 0 0]+169/256)
+plot(radiusL1.*cos(th)+center(1),radiusL1.*sin(th)+center(2),'.','MarkerSize',3,'Color',[0 0 0]+120/256)
 
 % Import and scale the nightsky appropriately.
 gt_img = imread('nightsky.png'); % Original input image file
@@ -90,7 +92,7 @@ gt_img_handle = image(x_img, y_img, gt_img,'CDataMapping','scaled');
 wlte_img = imresize(imread('wlte.png'),0.6); % Original input image file
 
 % Display the image with an associated spatial referencing object.
-img_scaleFactor = 1.9;
+img_scaleFactor = 1.3;
 x_img = linspace(-0.1*img_scaleFactor, 0.1*img_scaleFactor, size(wlte_img,2));
 y_img = linspace(0.11*img_scaleFactor, -0.11*img_scaleFactor, size(wlte_img,1)); %Note the 1 to -1 here due to the (1,1) pixel being in the top left corner.
 wlte_img_handle = image(x_img, y_img, wlte_img,'CDataMapping','scaled');
@@ -110,9 +112,9 @@ if 1
         % Update state variables        
         xuni = rbtm.get_poses();                            % States of real unicycle robots
         x = xuni(1:2,:);                                    % x-y positions
-        set(firstRob,'XData',x(1,2),'YData',x(2,2))
-        set(secondRob,'XData',x(1,3),'YData',x(2,3))
-        set(thirdRob,'XData',x(1,4),'YData',x(2,4))
+%         set(firstRob,'XData',x(1,2),'YData',x(2,2))
+%         set(secondRob,'XData',x(1,3),'YData',x(2,3))
+%         set(thirdRob,'XData',x(1,4),'YData',x(2,4))
         
         % Update errors
         errorToInitialPos = x - circularTargets;
@@ -140,7 +142,7 @@ end
  reachedCenter = false;
 for k = 1:max_iter
     loop_start_time = tic;
-    if k == 5000
+    if k == 4000
         % follower shift between sub leaders
         temp = [0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0,	0;
                 -1,	0,	0,	0,	0,	0,	0,	1,	0,	0,	0,	0;
@@ -156,45 +158,19 @@ for k = 1:max_iter
                 0,	-1,	1,	0,	0,	0,	0,	0,	0,	0,	0,	0];
         L = temp;
     end
-%%Radius adjust 1
-%     if (k == max_iter/4)
-%         radius = 0.8;
-%         interAgentDistance = radius*2*sin(pi/N);
-%     elseif k == 2*max_iter/4
-%         radius = 0.3;
-%         interAgentDistance = radius*2*sin(pi/N);
-%     elseif k == 3*max_iter/4
-%         radius = 1;
-%         interAgentDistance = radius*2*sin(pi/N);
-%     end
-%%Radius adjust 2
-%     radius = abs(sin(k/100))/2 + 0.3 % radius goes from 0.3 to 0.5+0.3
-%     interAgentDistance = radius*2*sin(pi/N);
 
-%%Center adjust 1
-%     if (k == max_iter/4)
-%         center = [-0.5; 0.0];
-%         set(centerData,'XData',center(1),'YData',center(2))
-%     elseif k == 2*max_iter/4
-%         center = [0.5; 0.0];
-%         set(centerData,'XData',center(1),'YData',center(2))
-%     elseif k == 3*max_iter/4
-%         center = [0.0; -0.5];
-%         set(centerData,'XData',center(1),'YData',center(2))
-%     end  
-    
 %     center = [0.05*cos(k/200);0.05*sin(k/200)];
     center = [0;0];
-    set(centerData,'XData',center(1),'YData',center(2))
+%     set(centerData,'XData',center(1),'YData',center(2))
     % Get new data and initialize new null velocities
     xuni = rbtm.get_poses();                                % Get new robots' states
     x = xuni(1:2,:);                                        % Extract single integrator states
-    set(firstRob,'XData',x(1,2),'YData',x(2,2))
-    set(secondRob,'XData',x(1,3),'YData',x(2,3))
-    set(thirdRob,'XData',x(1,4),'YData',x(2,4))
+%     set(firstRob,'XData',x(1,2),'YData',x(2,2))
+%     set(secondRob,'XData',x(1,3),'YData',x(2,3))
+%     set(thirdRob,'XData',x(1,4),'YData',x(2,4))
     %Find current centroid
     Xc = 1/(N-2)*x(:,3:N)*ones(N-2,1);
-    set(centeroidData,'XData',Xc(1),'YData',Xc(2))
+%     set(centeroidData,'XData',Xc(1),'YData',Xc(2))
     %Rotate the earth
     if mod(k,2) == 0
         set(wlte_img_handle,'CData', imrotate(wlte_img,k/5,'crop'));
@@ -226,8 +202,10 @@ for k = 1:max_iter
     %Leader follows the center
     
     dx(:,1) = dx(:,1) + kpL*(center - x(:,1));
-    if norm(center - x(:,1)) <= 0.01
+    if norm(center - x(:,1)) <= 0.005
         reachedCenter = true;
+    elseif norm(center - x(:,1)) <= 0.2
+        reachedCenter = false;
     end
     
     
@@ -254,10 +232,10 @@ for k = 1:max_iter
                     followerCount = length(find(L(:,leaderidx) == -1));
                     interAgentDistance = radius*2*sin(pi/(followerCount));
                     % Calculate dx
-                    alpha = pi/N - kp1*(interAgentDistance - norm(x(:,j)-x(:,i)) );
+                    alpha = pi/N - Kp1_4(1,followerCount)*(interAgentDistance - norm(x(:,j)-x(:,i)) );
                     alpha = min(max(alpha,-pi/2),pi/2);
                     R = [cos(alpha), sin(alpha); -sin(alpha) cos(alpha)];
-                    dx(:,i) = dx(:,i) - kp4*((interAgentDistance^2 - norm(x(:,j)-x(:,i))^2)/interAgentDistance).*(1*(x(:,j)-x(:,i)));
+                    dx(:,i) = dx(:,i) - Kp1_4(2,followerCount)*((interAgentDistance^2 - norm(x(:,j)-x(:,i))^2)/interAgentDistance).*(1*(x(:,j)-x(:,i)));
                 end
             end
         end
@@ -275,7 +253,7 @@ for k = 1:max_iter
     dxu = si_to_uni_dyn(dxi, xuni);                            % Convert single integrator inputs into unicycle inputs
 
     if reachedCenter == true
-        dxu(:,1) = [0; 0.1];
+        dxu(:,1) = [0; 0.2];
     end
 
     dxu = uni_barrier_cert(dxu, xuni);
