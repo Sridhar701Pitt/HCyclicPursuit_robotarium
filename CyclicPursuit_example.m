@@ -15,6 +15,7 @@ close all, clc
 structure = {[3];[1,3,4]};
 L2_leaders = [2,4,8];
 [L,N] = CyclicHierarchyLaplacian(structure);
+%{
 L = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
     -1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0;
      0,-1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
@@ -29,6 +30,7 @@ L = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
      0, 0, 0, 0, 0, 0, 0,-1, 0, 0, 1, 0, 0;
      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;];
 N = 13;
+%}
 %N =  Number of agents
 dt=0.01;                   % numerical steplength
 max_iter = 10000;                           
@@ -54,8 +56,8 @@ rbtm.step();                                                % Run robotarium ste
 
 % Target cycle definition
 center = [0;0];
-radiusL1 = 0.55; % Level 1 radius
-radiusL2 = 0.22; % Level 2 Radius
+radiusL1 = 0.6; % Level 1 radius
+radiusL2 = 0.3; % Level 2 Radius
 
 kp1 = 0.7; % Gain to maintain circular formation and distance
 % kp2 = 1.5; % Gain to follow the centroid
@@ -241,21 +243,19 @@ for k = 1:max_iter
             [m_dist, m_idx] = min(dist);
 
             [~,L_ones_col]=max(L,[],1);
-            c_node_leader = L_ones_col(find(ismember(L(c_node,:),-1)));
+            c_node_leader = find(ismember(L(c_node,:),-1));
             if isempty(c_node_leader)
                 if m_dist < 0.4
-                    m_idx
                     L = AddHierarchyLaplacian(L, L2_leaders(m_idx), c_node);
                 end
-                continue;
+                continue
             end
             c_node_leader_dist = dist(L2_leaders==c_node_leader);
 
             if L2_leaders(m_idx) ~= c_node_leader
                 if (c_node_leader_dist-m_dist) > 0.02
                     % switch the leader of the node in question
-                    % ...
-                    %L = UpdateHierarchyLaplacian(L, c_node_leader, L2_leaders(m_idx), c_node);
+                    L = UpdateHierarchyLaplacian(L, c_node_leader, L2_leaders(m_idx), c_node);
                 end
             end
 

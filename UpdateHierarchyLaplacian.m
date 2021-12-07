@@ -8,14 +8,14 @@ function [L_new] = UpdateHierarchyLaplacian(L, old, new, node)
 [~,B2]=max(L,[],1);
 
 % update the leader/follower network based on the modification requirement
-L(node, B1(old)) = 0; % remove node k from i
-L(node, B1(new)) = -1; % add node k to j
+L(node, old) = 0; % remove node k from i
+L(node, new) = -1; % add node k to j
 
 % remove the older follower "1" from the laplacian
 L(node,B1(node)) = 0;
 L(B2(node),node) = 0;
 
-for leader = [B1(old), B1(new)]
+for leader = [old, new]
 % find the row idx of all the rows with -1
 % for finding the blk of cyclic matrix
 blkNew = find(ismember(L(:,leader),-1))';
