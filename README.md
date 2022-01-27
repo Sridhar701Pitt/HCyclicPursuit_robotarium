@@ -1,4 +1,4 @@
-This project implements hierarchieal cyclic pursuit with leader follower behaviour on the Robotarium
+This project implements hierarchical cyclic pursuit with leader follower behavior on the Robotarium
 
 **Video**: https://youtu.be/GrvNAYRjFAk
 [![Link](https://img.youtube.com/vi/GrvNAYRjFAk/maxresdefault.jpg)](https://youtu.be/GrvNAYRjFAk)
